@@ -1,0 +1,20 @@
+# never commit binaries or game assets
+*.tgz
+*.tar.gz
+*.7z
+*.exe
+*.dll
+*.so
+*.pak
+
+# runtime junk
+*.log
+*.pid
+*.dat
+.DS_Store
+
+# secrets
+secrets
+*.secret
+ssh_run.exp
+scp_to.exp

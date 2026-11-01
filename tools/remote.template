@@ -1,0 +1,23 @@
+#!/usr/bin/expect -f
+# Template: SSH helper without embedded credentials.
+# Copy to ssh_run.exp / scp_to.exp and export the env vars first:
+#   export JX_HOST=root@<vps-ip>  JX_PASS='<password>'
+# (On macOS, use the Keychain instead of env vars if you prefer.)
+#
+# usage: ssh_run.exp "<remote command>"
+
+set timeout 120
+if {![info exists env(JX_HOST)] || ![info exists env(JX_PASS)]} {
+    puts "set JX_HOST and JX_PASS first"
+    exit 2
+}
+set cmd [lindex $argv 0]
+spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+    -o PubkeyAuthentication=no $env(JX_HOST) $cmd
+expect {
+    -re "(?i)password:" { send "$env(JX_PASS)\r"; exp_continue }
+    -re "(?i)yes/no"    { send "yes\r"; exp_continue }
+    eof
+}
+catch wait result
+exit [lindex $result 3]
