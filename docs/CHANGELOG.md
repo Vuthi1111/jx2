@@ -70,3 +70,43 @@ Client port 55795 reachable externally. **License blobs did not block startup.**
 - [ ] Close port 8886 to the internet
 - [ ] Identify the 7 `_LoadTable NOT_SUPPORT` tables in Goddess
 - [ ] Custom features via the Lua tree; mobile client research (long-term)
+## Phase 5 — hardening + durability pass (2026-11-02)
+
+Goal: fix everything that was left on a workaround, then prove it survives a reboot.
+
+**Security fixes**
+- MySQL was found listening on `*:3306` **with `skip-grant-tables`** — i.e. the whole database
+  open to the internet, passwordless. Bound to `127.0.0.1` immediately (`bind-address`), verified with `ss`.
+- Enabled **firewalld**; public zone allows only `ssh` + `55795/tcp`, everything else `reject`.
+  The gameserver port `8886` is no longer externally reachable.
+- Removed the temporary "accept any password" accounts created while debugging
+  (`paysys` via PAM, `wineuser` via unix_socket, `root@127.0.0.1`) and `/etc/pam.d/mysql`.
+- All 3.1 GB of extracted server files remain outside version control (see `.gitignore`).
+
+**Components brought back to life after the auth change** (each one failed differently)
+- Relay died with a bare `Start failed` → `strace` showed MySQL `28000 Access denied`; root cause was
+  **four separate DB configs** in `relay.ini` + `RelaySetting/Database.ini`, one still on TCP as user `vltk2`.
+  Fixed by pointing every host at `localhost` so it uses the socket.
+- Gameserver died with `Init Log DB Failed` → its log-DB credentials are **compiled into the binary**,
+  use TCP `root@127.0.0.1`, and no discoverable password matched (not empty, not 1234/123456/12345678/root/jx2).
+  Also found the log DB table was `latin1` while the server charset is `utf8mb4` → converted.
+- Paysys simulator died with `Cannot Connect to Mysql Server` → its ini password field is
+  **limited to 16 characters**; a 32-char password never worked, 16 does.
+- Full root-cause chain documented in [`CREDENTIALS.md`](CREDENTIALS.md), including the decision to
+  keep `skip-grant-tables` behind loopback + firewall as known debt.
+
+**Durability**
+- All units `systemctl enable`d; paysys container runs with `--restart=always` +
+  `podman-restart.service` + `loginctl enable-linger`.
+- Added `After=/Wants=` ordering so the gameserver waits for Relay and the paysys container.
+- **Reboot tested twice.** After the second boot all five services and the container came back
+  automatically and the chain re-established itself:
+  `[Paysys] nResult = 1` → `[GameServer 0] Connected ... protocol version (80-->80)` → `[GameSvr] start up OK`.
+
+Final state: RAM 1.2 GB / 3.6 GB with one gameserver; only `55795/tcp` exposed.
+
+## Phase 6 — next: mobile
+
+The server side is considered done for PC. The remaining goal is **mobile**, and there is no
+public JX2-mobile server package (verified: RaGEZONE/CN/VN sources contain only JX1-mobile builds
+or incomplete JX2-mobile bundles missing the game DB). Options are being evaluated separately.

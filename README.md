@@ -6,8 +6,12 @@ documentation and configuration templates.
 
 ## Current status (2026-11-02)
 
-**Stack is running end-to-end on a CentOS Stream 9 VPS.** All components boot, Bishop registers the
-gameserver (`protocol version 80-->80`), and the client-facing port (55795) is reachable.
+**Stack runs end-to-end on a CentOS Stream 9 VPS and survives reboots.** Verified after two reboots:
+all five services and the paysys container come back automatically and the chain re-establishes
+(`[Paysys] nResult = 1` → `[GameServer 0] Connected ... protocol version (80-->80)` → `[GameSvr] start up OK`).
+
+Exposure: only `55795/tcp` (client) is open to the internet; MySQL is bound to loopback and the
+gameserver port `8886` is blocked by firewalld.
 
 | Component | Port(s) | State |
 |---|---|---|
@@ -41,6 +45,7 @@ Chronological work log: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 ```
 docs/AUDIT.md        audit of the server package (architecture, risks, leftovers)
 docs/DEPLOYMENT.md   step-by-step runbook: bare CentOS Stream 9 -> running stack
+docs/CREDENTIALS.md  the DB credential maze: who connects how, and the known debt
 docs/CHANGELOG.md    what we changed, in order
 tools/deploy_setup.sh       extract + MySQL init + config patching
 tools/deploy_services.sh    systemd units for the whole stack
@@ -75,7 +80,10 @@ Then run the paysys simulator in a 32-bit Wine container (see `docs/DEPLOYMENT.m
 
 - [ ] Client package + first login (account `test` / `test123` already created)
 - [ ] Registration / GM web panel (MD5 hash format confirmed, schema audited)
-- [ ] Credential hardening: remove `skip-grant-tables`, single agreed DB password
-- [ ] Close port 8886 externally
+- [x] Close port 8886 externally (firewalld: only ssh + 55795)
+- [x] MySQL bound to loopback (was exposed on *:3306)
+- [x] Reboot-persistence verified
+- [ ] Remove `skip-grant-tables` — blocked: the gameserver's log-DB password is compiled in and
+      unknown (see docs/CREDENTIALS.md). Requires patching the Go binary.
 - [ ] Custom features (skills, events, chat, themed content) via the Lua script tree
 - [ ] Mobile client research (no public JX2-mobile server files exist — long-term RE work)
