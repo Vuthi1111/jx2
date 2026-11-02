@@ -46,6 +46,7 @@ Chronological work log: [`docs/CHANGELOG.md`](docs/CHANGELOG.md).
 docs/AUDIT.md        audit of the server package (architecture, risks, leftovers)
 docs/DEPLOYMENT.md   step-by-step runbook: bare CentOS Stream 9 -> running stack
 docs/CREDENTIALS.md  the DB credential maze: who connects how, and the known debt
+docs/CLIENT.md       client download, extraction (RAR5), IP patching, first login
 docs/CHANGELOG.md    what we changed, in order
 tools/deploy_setup.sh       extract + MySQL init + config patching
 tools/deploy_services.sh    systemd units for the whole stack

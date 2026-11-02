@@ -110,3 +110,15 @@ Final state: RAM 1.2 GB / 3.6 GB with one gameserver; only `55795/tcp` exposed.
 The server side is considered done for PC. The remaining goal is **mobile**, and there is no
 public JX2-mobile server package (verified: RaGEZONE/CN/VN sources contain only JX1-mobile builds
 or incomplete JX2-mobile bundles missing the game DB). Options are being evaluated separately.
+
+## Phase 6 — client acquired (2026-11-02)
+
+- Pulled the EoPi/LoLi client archive straight onto the VPS from Google Drive (confirm-token flow).
+- Archive is RAR5, password-protected. `unar` (EPEL) is buggy on it and EPEL `7z` lacks the RAR codec;
+  used rarlab's static `unrar` instead.
+- Password found via EoPi's mirror-forum thread: **`thuong`**.
+- Patched `settings/connectings.ini`: `0_Address=192.168.70.100 -> 130.94.6.220`. That is the only
+  server address the client needs — everything else goes through the gateway.
+- Client-side doc with extraction + patching instructions: `docs/CLIENT.md`.
+- Remaining client step: run `autovl2.exe` on a Windows machine (or test under the Wine container)
+  and log in with the `test`/`test123` account.
